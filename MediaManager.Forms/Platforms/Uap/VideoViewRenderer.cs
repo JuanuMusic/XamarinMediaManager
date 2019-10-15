@@ -1,5 +1,7 @@
-﻿using MediaManager.Forms.Platforms.Uap;
+﻿using System;
+using MediaManager.Forms.Platforms.Uap;
 using Windows.Foundation;
+using Windows.UI.Xaml.Media;
 using Xamarin.Forms.Platform.UWP;
 
 [assembly: ExportRenderer(typeof(MediaManager.Forms.VideoView), typeof(VideoViewRenderer))]
@@ -29,9 +31,29 @@ namespace MediaManager.Forms.Platforms.Uap
 
         protected override Size MeasureOverride(Size availableSize)
         {
-            _videoView.Height = availableSize.Height;
-            _videoView.Width = availableSize.Width;
-            return base.MeasureOverride(availableSize);
+            if (_videoView != null)
+            {
+                _videoView.Height = availableSize.Height;
+                _videoView.Width = availableSize.Width;
+
+                _videoView.PlayerView.Height = availableSize.Height;
+                _videoView.PlayerView.Width = availableSize.Width;
+            }
+            try
+            {
+                return base.MeasureOverride(availableSize);
+            }
+            catch (ArgumentException)
+            {
+                return DesiredSize;
+            }
+        }
+
+        protected override void UpdateBackgroundColor()
+        {
+            base.UpdateBackgroundColor();
+            if (Control != null)
+                Control.Background = new SolidColorBrush(Element.BackgroundColor.ToWindowsColor());
         }
 
         protected override void Dispose(bool disposing)

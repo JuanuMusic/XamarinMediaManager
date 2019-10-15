@@ -18,8 +18,6 @@ namespace MediaManager.Forms.Platforms.Android
 
         protected override void OnElementChanged(ElementChangedEventArgs<VideoView> args)
         {
-            base.OnElementChanged(args);
-
             if (args.OldElement != null)
             {
                 args.OldElement.Dispose();
@@ -30,17 +28,33 @@ namespace MediaManager.Forms.Platforms.Android
                 {
                     _videoView = new MediaManager.Platforms.Android.Video.VideoView(Context);
                     SetNativeControl(_videoView);
+                    UpdateBackgroundColor();
+                    UpdateLayout();
                 }
             }
+
+            base.OnElementChanged(args);
+        }
+
+        protected override void UpdateBackgroundColor()
+        {
+            base.UpdateBackgroundColor();
+            Control?.SetShutterBackgroundColor(Element.BackgroundColor.ToAndroid());
         }
 
         protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
         {
-            if (_videoView != null)
+            if (_videoView != null && widthMeasureSpec > -1 && heightMeasureSpec > -1)
             {
                 var p = _videoView.LayoutParameters;
-                p.Height = heightMeasureSpec;
-                p.Width = widthMeasureSpec;
+
+                if (p == null)
+                    p = new LayoutParams(widthMeasureSpec, heightMeasureSpec);
+                else
+                {
+                    p.Height = heightMeasureSpec;
+                    p.Width = widthMeasureSpec;
+                }
                 _videoView.LayoutParameters = p;
             }
             base.OnMeasure(widthMeasureSpec, heightMeasureSpec);

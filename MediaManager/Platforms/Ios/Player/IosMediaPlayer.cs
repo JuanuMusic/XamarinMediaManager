@@ -64,9 +64,26 @@ namespace MediaManager.Platforms.Ios.Player
             if (PlayerView == null)
                 return;
 
-            //TODO: Implement placeholder a better way?
-            if (value is UIView view)
-                PlayerView?.PlayerViewController?.ContentOverlayView?.AddSubview(view);
+            if (PlayerView?.PlayerViewController?.ContentOverlayView != null)
+            {
+                if (value is UIImage image)
+                {
+                    // Needs to be on the UI thread
+                    Player.InvokeOnMainThread(() =>
+                    {
+                        var view = new UIImageView(image)
+                        {
+                            Frame = PlayerView.PlayerViewController.ContentOverlayView.Frame
+                        };
+                        view.ClipsToBounds = true;
+                        view.ContentMode = UIViewContentMode.ScaleAspectFit;
+                        view.AutoresizingMask = UIViewAutoresizing.FlexibleDimensions;
+                        PlayerView?.PlayerViewController?.ContentOverlayView.AddSubview(view);
+                    });
+                }
+                else if (value is UIView view)
+                    PlayerView?.PlayerViewController?.ContentOverlayView.AddSubview(view);
+            }
         }
 
         protected override void Initialize()

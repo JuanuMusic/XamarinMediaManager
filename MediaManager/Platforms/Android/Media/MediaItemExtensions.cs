@@ -21,6 +21,23 @@ namespace MediaManager.Platforms.Android.Media
             return ToMediaSource(mediaDescription, mediaItem.MediaType);
         }
 
+        public static ClippingMediaSource ToClippingMediaSource(this IMediaItem mediaItem, TimeSpan stopAt)
+        {
+            var mediaDescription = mediaItem.ToMediaDescription();
+            var mediaSource = ToMediaSource(mediaDescription, mediaItem.MediaType);
+            return new ClippingMediaSource(mediaSource, (long)stopAt.TotalMilliseconds * 1000);
+        }
+
+        public static ClippingMediaSource ToClippingMediaSource(this IMediaItem mediaItem, TimeSpan startAt, TimeSpan stopAt)
+        {
+            var mediaDescription = mediaItem.ToMediaDescription();
+            var mediaSource = ToMediaSource(mediaDescription, mediaItem.MediaType);
+            //Clipping media source takes time values in microseconds
+            var startUs = startAt.Ticks / (TimeSpan.TicksPerMillisecond / 1000);
+            var endUs = stopAt.Ticks / (TimeSpan.TicksPerMillisecond / 1000);
+            return new ClippingMediaSource(mediaSource, startUs, endUs);
+        }
+
         public static IMediaSource ToMediaSource(this MediaDescriptionCompat mediaDescription, MediaType mediaType)
         {
             if (MediaManager.AndroidMediaPlayer.DataSourceFactory == null)
@@ -108,7 +125,6 @@ namespace MediaManager.Platforms.Android.Media
             //item.Artist = mediaDescription.
             //item.ArtUri = mediaDescription.
             //item.Author = mediaDescription.
-            //item.BtFolderType = mediaDescription.
             //item.Compilation = mediaDescription.
             //item.Composer = mediaDescription.
             //item.Date = mediaDescription.
@@ -151,10 +167,13 @@ namespace MediaManager.Platforms.Android.Media
             item.Artist = mediaMetadata.GetString(MediaMetadataCompat.MetadataKeyArtist);
             item.ImageUri = mediaMetadata.GetString(MediaMetadataCompat.MetadataKeyArtUri);
             item.Author = mediaMetadata.GetString(MediaMetadataCompat.MetadataKeyAuthor);
-            //item.BtFolderType = mediaMetadata.GetString(MediaMetadataCompat.MetadataKeyBtFolderType);
             item.Compilation = mediaMetadata.GetString(MediaMetadataCompat.MetadataKeyCompilation);
             item.Composer = mediaMetadata.GetString(MediaMetadataCompat.MetadataKeyComposer);
-            item.Date = mediaMetadata.GetString(MediaMetadataCompat.MetadataKeyDate);
+
+            var date = mediaMetadata.GetString(MediaMetadataCompat.MetadataKeyDate);
+            if (!string.IsNullOrEmpty(date) && DateTime.TryParse(date, out var dateResult))
+                item.Date = dateResult;
+
             item.DiscNumber = Convert.ToInt32(mediaMetadata.GetLong(MediaMetadataCompat.MetadataKeyDiscNumber));
             item.DisplayDescription = mediaMetadata.GetString(MediaMetadataCompat.MetadataKeyDisplayDescription);
             item.DisplayIcon = mediaMetadata.GetBitmap(MediaMetadataCompat.MetadataKeyDisplayIcon);
